@@ -1,0 +1,40 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/blockhash/{blockHeight}": {
+            "get": {
+                "description": "get all todo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bitcoind"
+                ],
+                "summary": "Get Blockhash by block height",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Block Height",
+                        "name": "blockHeight",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

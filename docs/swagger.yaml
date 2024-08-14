@@ -1,0 +1,25 @@
+info:
+  contact: {}
+paths:
+  /blockhash/{blockHeight}:
+    get:
+      consumes:
+      - application/json
+      description: get all todo
+      parameters:
+      - description: Block Height
+        in: path
+        name: blockHeight
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Get Blockhash by block height
+      tags:
+      - bitcoind
+swagger: "2.0"
