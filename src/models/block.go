@@ -11,7 +11,7 @@ type Block struct {
 	Height            int    `gorm:"not null"`
 	Version           int
 	VersionHex        string
-	Merkleroot        string
+	MerkleRoot        string
 	Time              int
 	Mediantime        int
 	Nonce             int
@@ -19,10 +19,10 @@ type Block struct {
 	Difficulty        float64
 	Chainwork         string
 	NTx               int
-	Previousblockhash string
-	Nextblockhash     string
-	Tx                string
-	Strippedsize      int
+	PreviousBlockHash string
+	NextBlockHash     string
+	Tx                []string `gorm:"type:json"`
+	StrippedSize      int
 	Size              int
 	Weight            int
 	Transactions      []Transaction `gorm:"foreignkey:BlockID"`
