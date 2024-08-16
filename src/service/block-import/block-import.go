@@ -3,7 +3,6 @@ package blockimport
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/nodlandhodl/bitcoin-analytics-backend/src/config"
 	"github.com/nodlandhodl/bitcoin-analytics-backend/src/models"
@@ -24,7 +23,7 @@ func ImportBlocksToDb() {
 	var count int64
 
 	if err := db.Model(&models.Block{}).Count(&count).Error; err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	var blockHash, errd = bitcoindService.GetBlockHash(int(count))
