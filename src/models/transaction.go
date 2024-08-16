@@ -20,7 +20,7 @@ type Transaction struct {
 	Blockhash     string
 	Confirmations int
 	Time          int
-	BlockID       uint
+	BlockID       string
 	Block         Block `gorm:"foreignkey:BlockID"`
 }
 

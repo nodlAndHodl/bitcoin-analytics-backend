@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -21,11 +22,11 @@ type Block struct {
 	NTx               int
 	PreviousBlockHash string
 	NextBlockHash     string
-	Tx                []string `gorm:"type:json"`
+	Tx                datatypes.JSON `gorm:"type:json"`
 	StrippedSize      int
 	Size              int
 	Weight            int
-	Transactions      []Transaction `gorm:"foreignkey:BlockID"`
+	//Transactions      []Transaction `gorm:"foreignkey:BlockID"`
 }
 
 func (b *Block) BeforeCreate(tx *gorm.DB) (err error) {

@@ -35,7 +35,7 @@ func NewBitcoindService() (*BitcoindService, error) {
 	return &BitcoindService{config: config}, nil
 }
 
-func (s *BitcoindService) getAddressFromScriptPubKey(scriptPubKey ScriptPubKey) string {
+func (s *BitcoindService) GetAddressFromScriptPubKey(scriptPubKey ScriptPubKey) string {
 	var address string
 
 	if len(scriptPubKey.Address) > 0 {
@@ -90,7 +90,7 @@ func (s *BitcoindService) GetBlockHash(index int) (string, error) {
 	return hash, nil
 }
 
-func (s *BitcoindService) getBlockCount() (int, error) {
+func (s *BitcoindService) GetBlockCount() (int, error) {
 	result, err := s.makeRpcCall("getblockcount", nil)
 	if err != nil {
 		return 0, err
@@ -102,7 +102,7 @@ func (s *BitcoindService) getBlockCount() (int, error) {
 	return count, nil
 }
 
-func (s *BitcoindService) getBlockStats(hashOrHeight interface{}) (*BlockStats, error) {
+func (s *BitcoindService) GetBlockStats(hashOrHeight interface{}) (*BlockStats, error) {
 	result, err := s.makeRpcCall("getblockstats", []interface{}{hashOrHeight})
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (s *BitcoindService) getBlockStats(hashOrHeight interface{}) (*BlockStats, 
 	return stats, nil
 }
 
-func (s *BitcoindService) getBlockchainInfo() (*BlockchainInfo, error) {
+func (s *BitcoindService) GetBlockchainInfo() (*BlockchainInfo, error) {
 	result, err := s.makeRpcCall("getblockchaininfo", nil)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (s *BitcoindService) getBlockchainInfo() (*BlockchainInfo, error) {
 	return info, nil
 }
 
-func (s *BitcoindService) getDifficulty() (*Difficulty, error) {
+func (s *BitcoindService) GetDifficulty() (*Difficulty, error) {
 	result, err := s.makeRpcCall("getdifficulty", nil)
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (s *BitcoindService) getDifficulty() (*Difficulty, error) {
 	return difficulty, nil
 }
 
-func (s *BitcoindService) getMempoolInfo() (*MempoolInfo, error) {
+func (s *BitcoindService) GetMempoolInfo() (*MempoolInfo, error) {
 	result, err := s.makeRpcCall("getmempoolinfo", nil)
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (s *BitcoindService) getMempoolInfo() (*MempoolInfo, error) {
 	return info, nil
 }
 
-func (s *BitcoindService) getChainTxStats(nblocks int, blockhash *string) (*ChainTxStats, error) {
+func (s *BitcoindService) GetChainTxStats(nblocks int, blockhash *string) (*ChainTxStats, error) {
 	params := []interface{}{nblocks}
 	if blockhash != nil {
 		params = append(params, *blockhash)
@@ -166,16 +166,22 @@ func (s *BitcoindService) getChainTxStats(nblocks int, blockhash *string) (*Chai
 	return stats, nil
 }
 
-func (s *BitcoindService) getRawTransaction(txid string, verbose bool) (*Transaction, error) {
+func (s *BitcoindService) GetRawTransaction(txid string, verbose bool) (*Transaction, error) {
 	result, err := s.makeRpcCall("getrawtransaction", []interface{}{txid, verbose})
 	if err != nil {
 		return nil, err
 	}
-	transaction, ok := result.(*Transaction)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert result to *Transaction")
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal result: %w", err)
 	}
-	return transaction, nil
+
+	var transaction Transaction
+	if err := json.Unmarshal(resultBytes, &transaction); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result to Block: %w", err)
+	}
+
+	return &transaction, nil
 }
 
 func (s *BitcoindService) makeRpcCall(method string, params []interface{}) (interface{}, error) {
@@ -245,20 +251,3 @@ func split(s, sep string) []string {
 	// Implement the split function here
 	return []string{}
 }
-
-// func main() {
-
-// 	service, errService := NewBitcoindService()
-
-// 	if errService != nil {
-// 		fmt.Println("Error:", errService)
-// 		return
-// 	}
-// 	// Example usage
-// 	block, err := service.getBlock("block_hash")
-// 	if err != nil {
-// 		fmt.Println("Error:", err)
-// 	} else {
-// 		fmt.Println("Block:", block)
-// 	}
-// }
