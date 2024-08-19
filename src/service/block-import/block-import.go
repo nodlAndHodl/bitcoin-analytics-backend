@@ -13,24 +13,33 @@ import (
 
 var db *gorm.DB = config.ConnectDB()
 
-func ImportBlocksToDb() {
+type ImportOptions struct {
+	BlockHash string
+}
 
+func ImportBlocksToDb(options ImportOptions) {
 	bitcoindService, err := bitcoind.NewBitcoindService()
 	if err != nil {
 		panic(err)
 	}
 
-	var count int64
+	var hash string
+	if len(options.BlockHash) == 0 {
+		var count int64
+		if err := db.Model(&models.Block{}).Count(&count).Error; err != nil {
+			panic(err)
+		}
 
-	if err := db.Model(&models.Block{}).Count(&count).Error; err != nil {
-		panic(err)
+		var errd error
+		hash, errd = bitcoindService.GetBlockHash(int(count))
+		if errd != nil {
+			panic(errd)
+		}
+	} else {
+		hash = options.BlockHash
 	}
 
-	var blockHash, errd = bitcoindService.GetBlockHash(int(count))
-	if errd != nil {
-		panic(errd)
-	}
-	var blockd, erd = bitcoindService.GetBlock(blockHash)
+	blockd, erd := bitcoindService.GetBlock(hash)
 	if erd != nil {
 		panic(erd.Error)
 	}
@@ -63,52 +72,53 @@ func ImportBlocksToDb() {
 		panic(err)
 	}
 	newBlock.Tx = datatypes.JSON(txJSON)
-	// Get the latest block height from the bitcoind service
-	// Loop through the blocks from the latest block height in the database to the latest block height from the bitcoind service
-	// Get the block hash from the bitcoind service
-	// Get the block from the bitcoind service
 
 	result := db.Create(&newBlock)
 	if result.Error != nil {
 		panic(result.Error)
 	}
 
-	var trasactiond, err4 = bitcoindService.GetRawTransaction(blockd.Tx[0], true)
-	if err4 != nil {
-		panic(err4)
-	}
-	fmt.Println(trasactiond)
-	var newTransaction = &models.Transaction{
-		BlockID:       newBlock.ID,
-		Hex:           trasactiond.Hex,
-		Confirmations: trasactiond.Confirmations,
-		Time:          trasactiond.Time,
-		Blockhash:     trasactiond.Blockhash,
-		Txid:          trasactiond.Txid,
-		Hash:          trasactiond.Hash,
-		Size:          trasactiond.Size,
-		Vsize:         trasactiond.Vsize,
-		Version:       trasactiond.Version,
-		Locktime:      trasactiond.Locktime,
-		Weight:        trasactiond.Weight,
+	for _, tx := range blockd.Tx {
+		trasactiond, err4 := bitcoindService.GetRawTransaction(tx, true)
+		if err4 != nil {
+			panic(err4)
+		}
+		fmt.Println(trasactiond)
+		newTransaction := &models.Transaction{
+			BlockID:       newBlock.ID,
+			Hex:           trasactiond.Hex,
+			Confirmations: trasactiond.Confirmations,
+			Time:          trasactiond.Time,
+			Blockhash:     trasactiond.Blockhash,
+			Txid:          trasactiond.Txid,
+			Hash:          trasactiond.Hash,
+			Size:          trasactiond.Size,
+			Vsize:         trasactiond.Vsize,
+			Version:       trasactiond.Version,
+			Locktime:      trasactiond.Locktime,
+			Weight:        trasactiond.Weight,
+		}
+
+		voutJSON, err := json.Marshal(trasactiond.Vout)
+		if err != nil {
+			panic(err)
+		}
+		newTransaction.Vout = string(voutJSON)
+
+		vinJSON, err := json.Marshal(trasactiond.Vin)
+		if err != nil {
+			panic(err)
+		}
+
+		newTransaction.Vin = string(vinJSON)
+
+		res := db.Create(&newTransaction)
+		if res.Error != nil {
+			panic(res.Error)
+		}
 	}
 
-	voutJSON, err := json.Marshal(trasactiond.Vout)
-	if err != nil {
-		panic(err)
+	if blockd.NextBlockHash != "" {
+		ImportBlocksToDb(ImportOptions{BlockHash: options.BlockHash})
 	}
-	newTransaction.Vout = string(voutJSON)
-
-	vinJSON, err := json.Marshal(trasactiond.Vin)
-	if err != nil {
-		panic(err)
-	}
-
-	newTransaction.Vin = string(vinJSON)
-
-	res := db.Create(&newTransaction)
-	if res.Error != nil {
-		panic(res.Error)
-	}
-
 }

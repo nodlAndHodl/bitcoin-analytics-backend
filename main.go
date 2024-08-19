@@ -15,6 +15,6 @@ var (
 func main() {
 	defer config.DisconnectDB(db)
 	models.AutoMigrate()
-	blockimport.ImportBlocksToDb()
+	blockimport.ImportBlocksToDb(blockimport.ImportOptions{})
 	routes.Routes()
 }
