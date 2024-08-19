@@ -4,6 +4,7 @@ import (
 	"github.com/nodlandhodl/bitcoin-analytics-backend/src/config"
 	"github.com/nodlandhodl/bitcoin-analytics-backend/src/models"
 	"github.com/nodlandhodl/bitcoin-analytics-backend/src/routes"
+	blockimport "github.com/nodlandhodl/bitcoin-analytics-backend/src/service/block-import"
 	"gorm.io/gorm"
 )
 
@@ -13,22 +14,7 @@ var (
 
 func main() {
 	defer config.DisconnectDB(db)
-	//run all migrations
-	// bitcoindService, err := bitcoind.NewBitcoindService()
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// blockhash, err := bitcoindService.GetBlockHash(0)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Printf("Block: %v\n", blockhash)
-	// block, err := bitcoindService.GetBlock(blockhash)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Printf("Block: %v\n", block)
 	models.AutoMigrate()
-	//run all routes
+	blockimport.ImportBlocksToDb(blockimport.ImportOptions{})
 	routes.Routes()
 }

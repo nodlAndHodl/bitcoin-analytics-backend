@@ -28,7 +28,7 @@ var dbConnect *gorm.DB = config.ConnectDB()
 // GetAllTodos lists all existing todos
 //
 //	@Summary      Get Blockhash by block height
-//	@Description  get all todo
+//	@Description  get blockhash by block height
 //	@Tags         bitcoind
 //	@Accept       json
 //	@Produce      json

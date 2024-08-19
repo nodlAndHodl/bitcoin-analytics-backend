@@ -79,7 +79,7 @@ type Block struct {
 	MerkleRoot        string   `json:"merkleroot"`
 	Tx                []string `json:"tx"`
 	Time              int      `json:"time"`
-	Mediantime        int      `json:"mediantime"`
+	MedianTime        int      `json:"mediantime"`
 	Nonce             int      `json:"nonce"`
 	Bits              string   `json:"bits"`
 	Difficulty        float64  `json:"difficulty"`

@@ -21,7 +21,7 @@ func ConnectDB() *gorm.DB {
 	dbHost := os.Getenv("DB_HOST")
 	dbName := os.Getenv("DB_NAME")
 
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true&charset=utf8&loc=UTC", dbUser, dbPass, dbHost, dbName)
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true&loc=UTC&charset=utf8mb4&", dbUser, dbPass, dbHost, dbName)
 	db, errorDB := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
 	if errorDB != nil {
 		panic("Failed to connect mysql database")
