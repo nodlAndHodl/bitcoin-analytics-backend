@@ -26,7 +26,6 @@ type Block struct {
 	StrippedSize      int
 	Size              int
 	Weight            int
-	//Transactions      []Transaction `gorm:"foreignkey:BlockID"`
 }
 
 func (b *Block) BeforeCreate(tx *gorm.DB) (err error) {

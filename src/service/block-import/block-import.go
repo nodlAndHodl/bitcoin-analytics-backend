@@ -79,42 +79,49 @@ func ImportBlocksToDb(options ImportOptions) {
 	}
 
 	for _, tx := range blockd.Tx {
-		trasactiond, err4 := bitcoindService.GetRawTransaction(tx, true)
+		transactiond, err4 := bitcoindService.GetRawTransaction(tx, true)
 		if err4 != nil {
 			panic(err4)
 		}
-		fmt.Println(trasactiond)
+		fmt.Println(transactiond)
 		newTransaction := &models.Transaction{
 			BlockID:       newBlock.ID,
-			Hex:           trasactiond.Hex,
-			Confirmations: trasactiond.Confirmations,
-			Time:          trasactiond.Time,
-			Blockhash:     trasactiond.Blockhash,
-			Txid:          trasactiond.Txid,
-			Hash:          trasactiond.Hash,
-			Size:          trasactiond.Size,
-			Vsize:         trasactiond.Vsize,
-			Version:       trasactiond.Version,
-			Locktime:      trasactiond.Locktime,
-			Weight:        trasactiond.Weight,
+			Hex:           transactiond.Hex,
+			Confirmations: transactiond.Confirmations,
+			Time:          transactiond.Time,
+			Blockhash:     transactiond.Blockhash,
+			Txid:          transactiond.Txid,
+			Hash:          transactiond.Hash,
+			Size:          transactiond.Size,
+			Vsize:         transactiond.Vsize,
+			Version:       transactiond.Version,
+			Locktime:      transactiond.Locktime,
+			Weight:        transactiond.Weight,
 		}
 
-		voutJSON, err := json.Marshal(trasactiond.Vout)
+		voutJSON, err := json.Marshal(transactiond.Vout)
 		if err != nil {
 			panic(err)
 		}
 		newTransaction.Vout = string(voutJSON)
 
-		vinJSON, err := json.Marshal(trasactiond.Vin)
-		if err != nil {
-			panic(err)
-		}
-
-		newTransaction.Vin = string(vinJSON)
-
 		res := db.Create(&newTransaction)
 		if res.Error != nil {
 			panic(res.Error)
+		}
+
+		for _, vin := range transactiond.Vin {
+			newVin := models.Vin{
+				Txid:      vin.Txid,
+				Vout:      vin.Vout,
+				Coinbase:  vin.Coinbase,
+				ScriptSig: vin.ScriptSig,
+				Sequence:  vin.Sequence,
+			}
+			res := db.Create(&newVin)
+			if res.Error != nil {
+				panic(res.Error)
+			}
 		}
 	}
 

@@ -10,5 +10,5 @@ var (
 )
 
 func AutoMigrate() {
-	db.AutoMigrate(&Block{}, &Transaction{})
+	db.AutoMigrate(&Block{}, &Transaction{}, &Vin{})
 }

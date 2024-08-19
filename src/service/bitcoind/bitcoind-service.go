@@ -207,6 +207,7 @@ func (s *BitcoindService) makeRpcCall(method string, params []interface{}) (inte
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
+	defer client.CloseIdleConnections()
 	for attempt := 1; attempt <= 3; attempt++ {
 		resp, err := client.Do(req)
 		if err != nil {
