@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nodlandhodl/bitcoin-analytics-backend/src/config"
+	dbconfig "github.com/nodlandhodl/bitcoin-analytics-backend/src/db-config"
 	"github.com/nodlandhodl/bitcoin-analytics-backend/src/service/bitcoind"
 	"gorm.io/gorm"
 )
@@ -21,20 +21,16 @@ func NewBitcoindController(bitcoindService *bitcoind.BitcoindService) *BitcoindC
 }
 
 // Define database client
-var dbConnect *gorm.DB = config.ConnectDB()
+var dbConnect *gorm.DB = dbconfig.ConnectDB()
 
-// Define database client
-
-// GetAllTodos lists all existing todos
-//
-//	@Summary      Get Blockhash by block height
-//	@Description  get blockhash by block height
-//	@Tags         bitcoind
-//	@Accept       json
-//	@Produce      json
-//	@Param        blockHeight path int true "Block Height"
-//	@Success      200 {string} hash
-//	@Router       /blockhash/{blockHeight} [get]
+// @Summary      Get Blockhash by block height
+// @Description  get blockhash by block height
+// @Tags         bitcoind
+// @Accept       json
+// @Produce      json
+// @Param        blockHeight path int true "Block Height"
+// @Success      200 {string} hash
+// @Router       /blockhash/{blockHeight} [get]
 func (bc *BitcoindController) GetBlockHash(
 	context *gin.Context) {
 	// Extract the block height parameter from the request
@@ -56,4 +52,28 @@ func (bc *BitcoindController) GetBlockHash(
 
 	// Creating http response
 	context.JSON(http.StatusOK, hash)
+}
+
+// @Summary      Get Block by block hash
+// @Description  get block by block hash
+// @Tags         bitcoind
+// @Accept       json
+// @Produce      json
+// @Param        blockHash path string true "Block Hash"
+// @Success      200 {object} models.Block
+// @Router       /block/{blockHash} [get]
+func (bc *BitcoindController) GetBlock(
+	context *gin.Context) {
+	// Extract the block hash parameter from the request
+	blockHash := context.Param("blockHash")
+
+	// Call the GetBlock function with the extracted block hash
+	block, err := bc.bitcoindService.GetBlock(blockHash)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Creating http response
+	context.JSON(http.StatusOK, block)
 }

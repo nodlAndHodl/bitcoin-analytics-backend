@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/nodlandhodl/bitcoin-analytics-backend/src/config"
-	"github.com/nodlandhodl/bitcoin-analytics-backend/src/models"
+	dbconfig "github.com/nodlandhodl/bitcoin-analytics-backend/src/db-config"
+	"github.com/nodlandhodl/bitcoin-analytics-backend/src/entities"
 	"github.com/nodlandhodl/bitcoin-analytics-backend/src/service/bitcoind"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB = config.ConnectDB()
+var db *gorm.DB = dbconfig.ConnectDB()
 
 type ImportOptions struct {
 	BlockHash string
@@ -26,7 +26,7 @@ func ImportBlocksToDb(options ImportOptions) {
 	var hash string
 	if len(options.BlockHash) == 0 {
 		var count int64
-		if err := db.Model(&models.Block{}).Count(&count).Error; err != nil {
+		if err := db.Model(&entities.Block{}).Count(&count).Error; err != nil {
 			panic(err)
 		}
 
@@ -46,7 +46,7 @@ func ImportBlocksToDb(options ImportOptions) {
 
 	fmt.Println(blockd)
 
-	newBlock := &models.Block{
+	newBlock := &entities.Block{
 		Height:            blockd.Height,
 		Hash:              blockd.Hash,
 		Version:           blockd.Version,
@@ -84,7 +84,7 @@ func ImportBlocksToDb(options ImportOptions) {
 			panic(err4)
 		}
 		fmt.Println(transactiond)
-		newTransaction := &models.Transaction{
+		newTransaction := &entities.Transaction{
 			BlockID:       newBlock.ID,
 			Hex:           transactiond.Hex,
 			Confirmations: transactiond.Confirmations,
@@ -110,8 +110,26 @@ func ImportBlocksToDb(options ImportOptions) {
 			panic(res.Error)
 		}
 
+		for _, vout := range transactiond.Vout {
+			newVout := entities.Vout{
+				Txid:  transactiond.Txid,
+				Value: vout.Value,
+				N:     vout.N,
+				ScriptPubKey: entities.ScriptPubKey{
+					Asm:     vout.ScriptPubKey.Asm,
+					Hex:     vout.ScriptPubKey.Hex,
+					Type:    vout.ScriptPubKey.Type,
+					Address: vout.ScriptPubKey.Address,
+				},
+			}
+			res := db.Create(&newVout)
+			if res.Error != nil {
+				panic(res.Error)
+			}
+		}
+
 		for _, vin := range transactiond.Vin {
-			newVin := models.Vin{
+			newVin := entities.Vin{
 				Txid:      vin.Txid,
 				Vout:      vin.Vout,
 				Coinbase:  vin.Coinbase,
