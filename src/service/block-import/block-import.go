@@ -17,6 +17,13 @@ type ImportOptions struct {
 	BlockHash string
 }
 
+func stringToPointer(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 func ImportBlocksToDb(options ImportOptions) {
 	bitcoindService, err := bitcoind.NewBitcoindService()
 	if err != nil {
@@ -99,12 +106,6 @@ func ImportBlocksToDb(options ImportOptions) {
 			Weight:        transactiond.Weight,
 		}
 
-		voutJSON, err := json.Marshal(transactiond.Vout)
-		if err != nil {
-			panic(err)
-		}
-		newTransaction.Vout = string(voutJSON)
-
 		res := db.Create(&newTransaction)
 		if res.Error != nil {
 			panic(res.Error)
@@ -112,14 +113,15 @@ func ImportBlocksToDb(options ImportOptions) {
 
 		for _, vout := range transactiond.Vout {
 			newVout := entities.Vout{
-				Txid:  transactiond.Txid,
-				Value: vout.Value,
-				N:     vout.N,
+				Txid:          stringToPointer(transactiond.Txid),
+				TransactionID: newTransaction.ID,
+				Value:         vout.Value,
+				N:             vout.N,
 				ScriptPubKey: entities.ScriptPubKey{
-					Asm:     vout.ScriptPubKey.Asm,
-					Hex:     vout.ScriptPubKey.Hex,
-					Type:    vout.ScriptPubKey.Type,
-					Address: vout.ScriptPubKey.Address,
+					Asm:     stringToPointer(vout.ScriptPubKey.Asm),
+					Hex:     stringToPointer(vout.ScriptPubKey.Hex),
+					Type:    stringToPointer(vout.ScriptPubKey.Type),
+					Address: stringToPointer(vout.ScriptPubKey.Address),
 				},
 			}
 			res := db.Create(&newVout)
@@ -130,11 +132,15 @@ func ImportBlocksToDb(options ImportOptions) {
 
 		for _, vin := range transactiond.Vin {
 			newVin := entities.Vin{
-				Txid:      vin.Txid,
-				Vout:      vin.Vout,
-				Coinbase:  vin.Coinbase,
-				ScriptSig: vin.ScriptSig,
-				Sequence:  vin.Sequence,
+				Txid:          stringToPointer(vin.Txid),
+				TransactionID: newTransaction.ID,
+				Vout:          vin.Vout,
+				Coinbase:      vin.Coinbase,
+				ScriptSig: entities.ScriptSig{
+					Asm: stringToPointer(vin.ScriptSig.Asm),
+					Hex: stringToPointer(vin.ScriptSig.Hex),
+				},
+				Sequence: vin.Sequence,
 			}
 			res := db.Create(&newVin)
 			if res.Error != nil {

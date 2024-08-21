@@ -7,14 +7,13 @@ import (
 
 type Transaction struct {
 	ID            string `gorm:"type:char(36);primary_key;"`
-	Txid          string `gorm:"not null"`
+	Txid          string `gorm:"not null,index"`
 	Hash          string
 	Version       int
 	Size          int
 	Vsize         int
 	Weight        int
 	Locktime      int
-	Vout          string
 	Hex           string
 	Blockhash     string
 	Confirmations int
