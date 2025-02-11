@@ -12,4 +12,5 @@ var (
 func AutoMigrate() {
 	db.AutoMigrate(&Block{}, &Transaction{})
 	db.AutoMigrate(&Vin{}, &Vout{})
+	db.AutoMigrate(&Address{}, &AddressTransactions{})
 }

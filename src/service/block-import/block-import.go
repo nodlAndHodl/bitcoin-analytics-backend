@@ -3,6 +3,7 @@ package blockimport
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	dbconfig "github.com/nodlandhodl/bitcoin-analytics-backend/src/db-config"
 	"github.com/nodlandhodl/bitcoin-analytics-backend/src/entities"
@@ -11,6 +12,13 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	blockCountCache     int64
+	blockCountCacheTime time.Time
+	cacheDuration       = 5 * time.Minute // Cache duration
+)
+
+// https://github.com/sb1752/bitcoin-transaction-decoder/blob/master/src/transaction.rs
 var db *gorm.DB = dbconfig.ConnectDB()
 
 type ImportOptions struct {
@@ -24,6 +32,14 @@ func stringToPointer(s string) *string {
 	return &s
 }
 
+func getLatestBlock() (*entities.Block, error) {
+	var block entities.Block
+	if err := db.Order("height desc").First(&block).Error; err != nil {
+		return nil, err
+	}
+	return &block, nil
+}
+
 func ImportBlocksToDb(options ImportOptions) {
 	bitcoindService, err := bitcoind.NewBitcoindService()
 	if err != nil {
@@ -32,15 +48,21 @@ func ImportBlocksToDb(options ImportOptions) {
 
 	var hash string
 	if len(options.BlockHash) == 0 {
-		var count int64
-		if err := db.Model(&entities.Block{}).Count(&count).Error; err != nil {
+		latestBlock, err := getLatestBlock()
+		if err != nil && err != gorm.ErrRecordNotFound {
 			panic(err)
 		}
 
-		var errd error
-		hash, errd = bitcoindService.GetBlockHash(int(count))
-		if errd != nil {
-			panic(errd)
+		var height int
+		if latestBlock != nil {
+			height = latestBlock.Height + 1
+		} else {
+			height = 0 // Start from the genesis block if no blocks are found
+		}
+
+		hash, err = bitcoindService.GetBlockHash(height)
+		if err != nil {
+			panic(err)
 		}
 	} else {
 		hash = options.BlockHash
@@ -148,6 +170,9 @@ func ImportBlocksToDb(options ImportOptions) {
 			}
 		}
 	}
+
+	blockCountCache++
+	blockCountCacheTime = time.Now()
 
 	if blockd.NextBlockHash != "" {
 		ImportBlocksToDb(ImportOptions{BlockHash: options.BlockHash})

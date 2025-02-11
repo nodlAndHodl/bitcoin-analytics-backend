@@ -16,5 +16,6 @@ func main() {
 	defer dbconfig.DisconnectDB(db)
 	entities.AutoMigrate()
 	blockimport.ImportBlocksToDb(blockimport.ImportOptions{})
+	//addressimport.ImportAddressesToDb()
 	routes.Routes()
 }
